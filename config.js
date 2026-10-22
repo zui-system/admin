@@ -4,6 +4,7 @@
    jenis:
      "zuisystem" = pola ZUI ERP (dulu Zui System): perusahaan/{id}.langganan, bantuan, sistem/bayar
      "standar"   = pola ZUI KONTRAKTOR, ZUI JURNAL dan ZUI TO-DO: companies/{id} plan/until/free, subreqs, zconfig/pay
+     "finance"   = pola ZUI FINANCE: workspaces/{id}/billing/plan, planRequests, chats (lihat zui-admin-kontrak.txt di repo Finance)
    Aplikasi Zui baru sebaiknya memakai pola "standar" agar cukup menambah satu blok di bawah.
 
    Aplikasi PERTAMA di daftar dipakai untuk tombol "Masuk dengan Google". */
@@ -84,6 +85,25 @@ window.ZUI_ADMIN = {
         storageBucket: "zui-todo.firebasestorage.app",
         messagingSenderId: "661168023257",
         appId: "1:661168023257:web:07a176ea382c8b9fb6c0c8"
+      }
+    },
+    {
+      id: "fin",
+      nama: "ZUI FINANCE",
+      jenis: "finance",
+      warna: "#2BB673",
+      url: "https://finance.zuisystem.com",
+      // samakan dengan index.html ZUI FINANCE (planInfo: 14 hari percobaan Pro sejak buku dibuat, lalu paket Gratis)
+      percobaanHari: 14,
+      // harga Rupiah per paket: 1 = bulanan (30 hari), 12 = tahunan (365 hari). Harus sama dengan PL di index.html ZUI FINANCE
+      hargaAwal: { pro: { 1: 99000, 12: 990000 }, bisnis: { 1: 199000, 12: 1990000 } },
+      firebase: {
+        apiKey: "AIzaSyA2sNMzxL0OHMSISirTJ-odR6xzGyY7SIc",
+        authDomain: "akuntansi-zuisystem.firebaseapp.com",
+        projectId: "akuntansi-zuisystem",
+        storageBucket: "akuntansi-zuisystem.firebasestorage.app",
+        messagingSenderId: "185991014669",
+        appId: "1:185991014669:web:02e913399e410e6c27a844"
       }
     }
 

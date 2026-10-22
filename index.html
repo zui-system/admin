@@ -152,7 +152,7 @@ dialog::backdrop{background:rgba(5,8,10,.6)}dialog h2{margin:0 0 4px;font:600 20
 /* =================== dasar =================== */
 const $=s=>document.querySelector(s);
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.4';
+const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.5';
 const APPS=(CF.apps||[]).filter(a=>a&&a.firebase&&a.firebase.apiKey&&a.id).map((a,i)=>Object.assign({warna:'#2FA8D8',jenis:'standar',nama:a.id},a,{i,fa:null,fs:null,ready:false,on:false,err:'',lerr:'',loading:false,loaded:false,co:[],q:[],rev:[],sub:[],bh:[],pay:null,un:[],qf:0,bf:0,qr:null,qp:null}));
 const pad=n=>String(n).padStart(2,'0'),MB=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const iso=m=>{const d=new Date(m);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
@@ -185,7 +185,7 @@ function shrink(f,side,max){return new Promise((ok,no)=>{const r=new FileReader(
  for(let t=0;t<7;t++){const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(w*s));cv.height=Math.max(1,Math.round(h*s));const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);d=cv.toDataURL('image/png');if(d.length<=max)break;s*=.8}
  d.length<=max?ok(d):no(new Error('Gambar terlalu besar'))};im.onerror=()=>no(new Error('Gambar tidak bisa dibaca'));im.src=r.result};r.onerror=()=>no(new Error('Gambar tidak bisa dibaca'));r.readAsDataURL(f)})}
 const KL={free:'Gratis selamanya',paid:'Berbayar',trial:'Percobaan',grace:'Tenggang',expired:'Habis'};
-function stPill(c){const l=left(c);if(c.kind==='free')return'<span class="pill ok">gratis</span>';if(c.kind==='expired')return'<span class="pill bad">habis</span>';if(c.kind==='grace')return'<span class="pill bad">tenggang '+Math.max(0,c.graceLeft||0)+' hari</span>';
+function stPill(c){const l=left(c);if(c.kind==='free')return'<span class="pill ok">gratis</span>';if(c.kind==='expired')return c.a&&c.a.jenis==='finance'?'<span class="pill am">paket gratis</span>':'<span class="pill bad">habis</span>';if(c.kind==='grace')return'<span class="pill bad">tenggang '+Math.max(0,c.graceLeft||0)+' hari</span>';
  const t=c.kind==='trial'?'percobaan · ':'';return`<span class="pill ${l<=7?'am':'ok'}">${t}${l} hari</span>`}
 
 /* =================== pola "standar" (ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO dan aplikasi baru) =================== */
@@ -304,7 +304,72 @@ const SYS={
   if(JSON.stringify(o).length>980000)throw new Error('Gambar QR terlalu besar (batas 1 MB per dokumen). Hapus QRIS per paket yang tidak dipakai atau pakai gambar QR yang lebih kecil.');
   await a.fs.collection('sistem').doc('bayar').set(o);a.pay=o}
 };
-const ADP={standar:STD,zuisystem:SYS};
+/* =================== pola "finance" (ZUI FINANCE, lihat zui-admin-kontrak.txt di repo Finance) ===================
+   workspaces/{w} + billing/plan {plan:'pro'|'bisnis',until}, planRequests/{w}, chats/{w}/messages.
+   Habis masa percobaan/paket = turun ke paket Gratis (bukan hanya-baca). Pemasukan dicatat di adminPayments. */
+const FPL={pro:'Pro',bisnis:'Bisnis'},FPER={monthly:'Bulanan',yearly:'Tahunan'},FDAYS={monthly:30,yearly:365};
+const FDEF={pro:{1:99000,12:990000},bisnis:{1:199000,12:1990000}};
+const finPrice=(a,plan,per)=>+(((a.hargaAwal||FDEF)[plan]||{})[per==='yearly'?12:1])||0;
+const FIN={
+ state(a,c){const now=Date.now(),TD=(+a.percobaanHari||14)*DAY;
+  if(c.untilRaw>=Date.UTC(2090,0,1))return{kind:'free',plan:FPL[c.pk]||'Bisnis',until:0};
+  if(c.untilRaw>now)return{kind:'paid',plan:FPL[c.pk]||c.pk||'Pro',until:c.untilRaw};
+  const te=(c.created||now)+TD;if(now<te)return{kind:'trial',plan:'Percobaan Pro',until:te};
+  return{kind:'expired',plan:'Gratis',until:c.untilRaw||te}},
+ async load(a){const db=a.fs;const [ws,rq]=await Promise.all([db.collection('workspaces').get(),db.collection('planRequests').get()]);
+  a.pay=null;
+  a.co=await Promise.all(ws.docs.map(async d=>{const x=d.data(),mi=x.memberInfo||{};let b={};try{const s=await db.collection('workspaces').doc(d.id).collection('billing').doc('plan').get();b=s.exists?s.data():{}}catch(e){}
+   const c={a,id:d.id,name:x.name||'(tanpa nama)',email:(mi[x.owner]||{}).email||'',created:ms(x.createdAt),pk:b.plan||'',untilRaw:ms(b.until),members:(x.memberIds||[]).length};return Object.assign(c,FIN.state(a,c))}));
+  a.sub=rq.docs.map(d=>{const x=d.data(),st={pending:'wait',approved:'ok',rejected:'no'}[x.status]||x.status;
+   return{id:d.id,cid:d.id,coName:x.wsName||'',plan:FPL[x.plan]||x.plan,months:x.period==='yearly'?12:1,amount:finPrice(a,x.plan,x.period),cur:'IDR',status:st,note:x.note||'',atMs:ms(x.at),doneMs:ms(x.decidedAt)}}).sort((p,q)=>q.atMs-p.atMs);
+  /* catatan pemasukan dibuat Zui Admin saat mengaktifkan; bila rules belum diterbitkan, pemasukan kosong saja */
+  a.rev=[];try{const ps=await db.collection('adminPayments').get();a.rev=ps.docs.map(d=>{const x=d.data();return{m:ms(x.at),amt:+x.amount||0,cur:'IDR',a,cid:x.ws,nm:x.wsName||''}})}catch(e){}},
+ watch(a){a.qf=0;a.un.push(a.fs.collection('planRequests').where('status','==','pending').onSnapshot(s=>{const old=new Set(a.q.map(q=>q.id));
+  a.q=s.docs.map(d=>{const r=d.data(),c=a.co.find(x=>x.id===d.id);return{a,id:d.id,cid:d.id,name:r.wsName||(c&&c.name)||d.id,email:r.email||'',label:(FPL[r.plan]||r.plan)+' · '+(FPER[r.period]||r.period),amount:finPrice(a,r.plan,r.period),cur:'IDR',ref:'',at:ms(r.at)||Date.now(),plan:r.plan,period:r.period,months:r.period==='yearly'?12:1}});
+  if(a.qf){const nw=a.q.filter(q=>!old.has(q.id));if(nw.length)notify(a.nama+': permintaan paket',nw.length>1?nw.length+' permintaan baru':nw[0].name+' · '+nw[0].label+' · '+fm(nw[0].amount,'IDR'))}a.qf=1;onQ()},e=>{a.lerr=fbe(e);rAll()}));
+  /* chats/{w}: lastFrom=='user' berarti perlu dibalas */
+  a.bf=0;a.un.push(a.fs.collection('chats').onSnapshot(s=>{const o=a.bh;a.bh=s.docs.map(d=>{const x=d.data();return{id:d.id,nama:x.wsName||d.id,oe:x.email||'',tp:ms(x.lastAt)||Date.now(),dr:x.lastFrom==='admin'?'a':'u',bu:x.lastFrom==='user',tx:x.lastText||'',st:'chat'}});
+   if(a.bf){const nw=a.bh.filter(h=>h.bu&&!(o.find(x=>x.id===h.id)||{}).bu);if(nw.length)notify(a.nama+': pesan baru',nw.length>1?nw.length+' pesan baru':nw[0].nama+(nw[0].tx?': '+nw[0].tx:''))}a.bf=1;onQ();if(KM.a===a)kmHeadUi()},e=>{a.lerr=fbe(e);rAll()}))},
+ /* masa aktif ditambah 30/365 hari dari tanggal berakhir yang masih berlaku, atau dari hari ini */
+ async setPlan(a,w,plan,until,pay){const db=a.fs,B=db.batch();B.set(db.collection('workspaces').doc(w).collection('billing').doc('plan'),{plan,until:TS(until)});if(pay)B.set(db.collection('adminPayments').doc(),pay);return B},
+ async activate(a,q){const db=a.fs,ref=db.collection('workspaces').doc(q.cid).collection('billing').doc('plan'),d=await ref.get(),x=d.exists?d.data():{};
+  const until=Math.max(Date.now(),ms(x.until))+(FDAYS[q.period]||30)*DAY,sv=firebase.firestore.FieldValue.serverTimestamp(),
+   B=await FIN.setPlan(a,q.cid,q.plan,until,{ws:q.cid,wsName:String(q.name||'').slice(0,80),plan:q.plan,period:q.period,amount:q.amount,at:sv});
+  B.update(db.collection('planRequests').doc(q.id),{status:'approved',decidedAt:sv,note:''});await B.commit();return until},
+ async reject(a,q,note){await a.fs.collection('planRequests').doc(q.id).update({status:'rejected',note:String(note||'').slice(0,200),decidedAt:firebase.firestore.FieldValue.serverTimestamp()})},
+ coDlg(a,c){const h=a.sub.filter(r=>r.cid===c.id),pk=c.pk||'pro';
+  dlg(`<h2>${E(c.name)}</h2><div class="m">${dotOf(a)} · ${E(c.email||'-')}</div>
+  <div class="kv"><span>Status</span><b>${c.kind==='expired'?'Gratis (paket/percobaan habis)':E(KL[c.kind])+(c.kind==='paid'?' · '+E(c.plan):'')}</b><span>${c.kind==='trial'?'Percobaan sampai':c.kind==='expired'?'Berakhir':'Aktif sampai'}</span><b>${c.until?fd(c.until)+(left(c)>0?' ('+left(c)+' hari lagi)':''):'-'}</b><span>Anggota</span><b>${c.members||1}</b><span>Dibuat</span><b>${fd(c.created)}</b><span>ID buku</span><b>${E(c.id)}</b></div>
+  <h3 class="h3">Perpanjang</h3><p class="m">Ditambah dari tanggal berakhir sekarang (atau dari hari ini bila sudah lewat).</p>
+  <label>Paket<select id="fp">${Object.keys(FPL).map(p=>`<option value="${p}"${p===pk?' selected':''}>${FPL[p]}</option>`).join('')}</select></label>
+  <div class="act"><button class="b" data-a="fext" data-v="monthly">+30 hari</button><button class="b" data-a="fext" data-v="yearly">+365 hari</button></div>
+  <h3 class="h3">Atur manual</h3>
+  <label>Aktif sampai<input id="fu" type="date" value="${c.untilRaw&&c.kind!=='free'?iso(c.untilRaw):''}"></label>
+  <div class="act"><button class="b pri" data-a="fsave">Simpan</button><button class="b" data-a="ffree">Bisnis selamanya</button><button class="b" data-a="fdown">Turunkan ke Gratis</button></div>
+  ${h.length?`<h3 class="h3">Permintaan terakhir</h3><div class="list">`+h.map(r=>`<div class="lr"><span class="tx"><span class="nm">${E(r.plan)} · ${r.months===12?'Tahunan':'Bulanan'} <span class="pill ${r.status==='ok'?'ok':r.status==='no'?'bad':'am'}">${r.status==='ok'?'aktif':r.status==='no'?'ditolak':'menunggu'}</span></span><span class="m">${fd(r.atMs)}${r.note?' · '+E(r.note):''}</span></span></div>`).join('')+'</div>':''}
+  <div class="act" style="margin-top:14px"><button class="b" data-a="km" data-i="${a.i}" data-id="${E(c.id)}">Buka percakapan</button></div>
+  <div class="btn"><button class="b" data-a="close">Tutup</button></div>`)},
+ async extend(a,c,plan,per){const until=Math.max(Date.now(),c.kind==='paid'?c.untilRaw:0)+(FDAYS[per]||30)*DAY;await(await FIN.setPlan(a,c.id,plan,until)).commit();return until},
+ async save(a,c,plan,until){await(await FIN.setPlan(a,c.id,plan,until)).commit()},
+ async down(a,c){await a.fs.collection('workspaces').doc(c.id).collection('billing').doc('plan').delete()},
+ payForm(a){const P=a.hargaAwal||FDEF;return`<p class="m">Harga ${E(a.nama)} diatur di aplikasinya (daftar paket <code>PL</code> di <code>index.html</code>) dan di <code>config.js</code> Zui Admin (<code>hargaAwal</code>). Keduanya harus sama. Pelanggan membayar lewat chat; aktifkan dari Antrean setelah uang masuk.</p>
+  <div class="sx"><table class="tb"><thead><tr><th>Paket</th><th>Bulanan (30 hari)</th><th>Tahunan (365 hari)</th></tr></thead><tbody><tr><td>Gratis</td><td>Rp 0</td><td>Rp 0</td></tr>${Object.keys(FPL).map(p=>`<tr><td>${FPL[p]}</td><td>${rp((P[p]||{})[1])}</td><td>${rp((P[p]||{})[12])}</td></tr>`).join('')}</tbody></table></div>`},
+ /* percakapan: chats/{w}/messages */
+ chat(a,cid,cb){return a.fs.collection('chats').doc(cid).collection('messages').orderBy('at','desc').limit(80).onSnapshot(s=>cb(s.docs.map(d=>{const x=d.data();return{dari:x.from==='admin'?'a':'u',teks:x.text||'',img:'',nama:x.name||'',ts:ms(x.at)||Date.now()}})),e=>toast(fbe(e)))},
+ seen(){},
+ send(a,cid,t){const db=a.fs,sv=firebase.firestore.FieldValue.serverTimestamp(),h=kmHead(a,cid),B=db.batch();t=t.slice(0,1000);
+  B.set(db.collection('chats').doc(cid).collection('messages').doc(),{from:'admin',uid:a.fa.currentUser.uid,name:'Zui Admin',text:t,at:sv});
+  B.set(db.collection('chats').doc(cid),{wsName:h.nama,email:h.oe,lastText:t.slice(0,200),lastFrom:'admin',lastAt:sv},{merge:true});return B.commit()}
+};
+/* percakapan pola standar: support/{cid}/msgs */
+Object.assign(STD,{
+ chat(a,cid,cb){return a.fs.collection('support').doc(cid).collection('msgs').orderBy('at','desc').limit(80).onSnapshot(s=>cb(s.docs.map(d=>{const x=d.data();return{dari:x.from==='a'?'a':'u',teks:x.text||'',img:x.img||'',nama:x.name||'',ts:ms(x.at)||Date.now()}})),e=>toast(fbe(e)))},
+ seen(a,cid){a.fs.collection('support').doc(cid).update({unread:false}).catch(()=>{})},
+ send(a,cid,t){const db=a.fs,sv=firebase.firestore.FieldValue.serverTimestamp(),h=kmHead(a,cid),B=db.batch();
+  B.set(db.collection('support').doc(cid).collection('msgs').doc(),{from:'a',name:'Tim ZUI',text:t.slice(0,2000),img:'',at:sv,uid:a.fa.currentUser.uid});
+  B.set(db.collection('support').doc(cid),{cid,coName:h.nama,byEmail:h.oe,last:t.slice(0,120),at:sv,from:'a',seen:false,unread:false},{merge:true});return B.commit()}
+});
+const ADP={standar:STD,zuisystem:SYS,finance:FIN};
 const ad=a=>ADP[a.jenis]||STD;
 
 /* =================== percakapan ZUI ERP (chat + periksa resit + aktivasi) =================== */
@@ -312,14 +377,14 @@ let KM={a:null,cid:'',msgs:[],un:null,R:null,busy:false,std:false};
 const kmHead=(a,cid)=>{const h=a.bh.find(x=>x.id===cid)||{},c=a.co.find(x=>x.id===cid)||{};return{cid,nama:String(h.nama||c.name||'').slice(0,80),oe:String(h.oe||c.email||'').toLowerCase()}};
 function kmStop(){if(KM.un){try{KM.un()}catch(e){}}KM={a:null,cid:'',msgs:[],un:null,R:null,busy:false,std:false}}
 $('#dk').addEventListener('close',kmStop);
-/* chat aplikasi pola standar (ZUI KONTRAKTOR, ZUI JURNAL): support/{cid}/msgs */
+/* chat aplikasi selain ZUI ERP: support/{cid}/msgs (standar) atau chats/{w}/messages (finance), lewat ad(a).chat/send/seen */
 function kmOpenStd(a,cid){cls();kmStop();KM.a=a;KM.cid=cid;KM.std=true;const h=a.bh.find(x=>x.id===cid)||{},c=a.co.find(x=>x.id===cid);
  dlg(`<h2>${E(h.nama||(c&&c.name)||cid)}</h2><div class="m">${dotOf(a)} · ${E(h.oe||(c&&c.email)||'')}</div>${c?`<div class="kv"><span>Status</span><b>${E(KL[c.kind])}${c.kind==='paid'||c.kind==='grace'?' · '+E(c.plan):''}</b><span>Berlaku sampai</span><b>${c.until?fd(c.until):'-'}</b></div>`:''}
  <div id="kmt" class="bnm"><div class="em">Memuat pesan…</div></div><div class="bnin"><input id="kmi" maxlength="2000" placeholder="Tulis balasan" aria-label="Tulis balasan"><button class="b" data-a="kmsend">Kirim</button></div>
  <div id="kmq"></div>
  <div class="act" style="margin-top:14px">${c?`<button class="b" data-a="co" data-i="${a.i}" data-id="${E(cid)}">Atur langganan</button>`:''}</div><div class="btn"><button class="b" data-a="close">Tutup</button></div>`);kmQ();
- try{KM.un=a.fs.collection('support').doc(cid).collection('msgs').orderBy('at','desc').limit(80).onSnapshot(s=>{if(KM.cid!==cid)return;KM.msgs=s.docs.map(d=>{const x=d.data();return{dari:x.from==='a'?'a':'u',teks:x.text||'',img:x.img||'',nama:x.name||'',ts:ms(x.at)||Date.now()}}).sort((x,y)=>x.ts-y.ts);kmChat()},e=>toast(fbe(e)))}catch(e){}
- if(h.bu)a.fs.collection('support').doc(cid).update({unread:false}).catch(()=>{})}
+ try{KM.un=ad(a).chat(a,cid,L=>{if(KM.cid!==cid)return;KM.msgs=L.sort((x,y)=>x.ts-y.ts);kmChat()})}catch(e){}
+ if(h.bu)ad(a).seen(a,cid)}
 function kmQ(){const el=$('#kmq');if(!el||!KM.a)return;const L=KM.a.q.filter(q=>q.cid===KM.cid);el.innerHTML=L.length?`<div class="h3">Permintaan bayar</div><div class="list">${L.map(qRow).join('')}</div>`:''}
 function kmOpen(a,cid){if(a&&a.jenis!=='zuisystem')return kmOpenStd(a,cid);cls();kmStop();KM.a=a;KM.cid=cid;const h=a.bh.find(x=>x.id===cid)||{},c=a.co.find(x=>x.id===cid);
  dlg(`<h2>${E(h.nama||(c&&c.name)||cid)}</h2><div class="m">${dotOf(a)} · ${E(h.oe||(c&&c.email)||'')}</div>${c?`<div class="kv"><span>Status</span><b>${E(KL[c.kind])}${c.kind==='paid'?' · '+E(c.plan):''}</b><span>Berlaku sampai</span><b>${c.until?fd(c.until):'-'}</b></div>`:''}
@@ -334,8 +399,7 @@ function kmHeadUi(){if(KM.std){kmQ();return}const el=$('#kmh');if(!el||!KM.a)ret
  el.innerHTML=(h.st==='langganan'||h.st==='resit')?`<span style="color:var(--am)">Pengajuan: ${E(p?p.nama:'paket belum dipilih')}. Cek dulu uang masuk di mutasi rekening.</span>`:'Tekan dua kali untuk mengaktifkan. Masa aktif ditambah dari tanggal berakhir saat ini.'}
 function kmChat(){const el=$('#kmt');if(!el)return;el.innerHTML=KM.msgs.length?KM.msgs.map(m=>`<div class="bm ${m.dari==='a'?'me':'ad'}">${m.img?`<img src="${E(m.img)}" alt="Foto dari pelanggan" style="display:block;max-width:240px;width:100%;border-radius:8px;margin-bottom:4px;background:#fff">`:''}${m.teks?`<div>${E(m.teks).replace(/\n/g,'<br>')}</div>`:''}<small>${E(m.dari==='a'?'Tim Zui':(m.nama||''))} · ${fdt(m.ts)}</small></div>`).join(''):'<div class="em">Belum ada pesan.</div>';el.scrollTop=el.scrollHeight}
 async function kmSend(){const i=$('#kmi'),t=(i.value||'').trim(),a=KM.a,cid=KM.cid;if(!t||!a){i&&i.focus();return}i.value='';const ts=Date.now(),db=a.fs,B=db.batch();
- if(KM.std){const sv=firebase.firestore.FieldValue.serverTimestamp(),h=kmHead(a,cid);B.set(db.collection('support').doc(cid).collection('msgs').doc(),{from:'a',name:'Tim ZUI',text:t.slice(0,2000),img:'',at:sv,uid:a.fa.currentUser.uid});
-  B.set(db.collection('support').doc(cid),{cid,coName:h.nama,byEmail:h.oe,last:t.slice(0,120),at:sv,from:'a',seen:false,unread:false},{merge:true});try{await B.commit()}catch(e){i.value=t;toast(fbe(e))}return}
+ if(KM.std){try{await ad(a).send(a,cid,t)}catch(e){i.value=t;toast(fbe(e))}return}
  B.set(db.collection('bantuan').doc(cid).collection('pesan').doc(uid()),{dari:'a',uid:a.fa.currentUser.uid,nama:'Tim Zui',teks:t.slice(0,1000),jenis:'chat',ts});
  B.set(db.collection('bantuan').doc(cid),Object.assign(kmHead(a,cid),{tp:ts,dr:'a',bu:false,ba:true,tx:t.slice(0,120)}),{merge:true});
  try{await B.commit()}catch(e){i.value=t;toast(fbe(e))}}
@@ -504,6 +568,10 @@ const ACT={
  yfree:el=>twice(el,()=>{const{a,c}=DX,v=c.kind==='free'?null:{paket:'Gratis selamanya',sampai:TS(FREE_UNTIL)};SYS.setL(a,c,v).then(()=>{cls();return after(a,v?'Gratis selamanya':'Status gratis dicabut, kembali ke uji coba')}).catch(e=>toast(fbe(e)))}),
  ystop:el=>twice(el,()=>{const{a,c}=DX;SYS.setL(a,c,{paket:(c.raw.langganan||{}).paket||'Langganan',sampai:TS(Date.now()-1000)}).then(()=>{cls();return after(a,'Langganan dihentikan')}).catch(e=>toast(fbe(e)))}),
  yrst:el=>twice(el,()=>{const{a,c}=DX;SYS.setL(a,c,null).then(()=>{cls();return after(a,'Kembali ke hitungan uji coba')}).catch(e=>toast(fbe(e)))}),
+ fext:el=>{const{a,c}=DX;busy(el,1);FIN.extend(a,c,$('#fp').value,el.dataset.v).then(u=>{cls();return after(a,c.name+': aktif sampai '+fd(u))}).catch(e=>toast(fbe(e))).finally(()=>busy(el,0))},
+ fsave:el=>{const{a,c}=DX,d=$('#fu').value;if(!d){toast('Pilih tanggal');return}busy(el,1);FIN.save(a,c,$('#fp').value,new Date(d+'T23:59:59').getTime()).then(()=>{cls();return after(a,'Disimpan')}).catch(e=>toast(fbe(e))).finally(()=>busy(el,0))},
+ ffree:el=>twice(el,()=>{const{a,c}=DX;FIN.save(a,c,'bisnis',FREE_UNTIL).then(()=>{cls();return after(a,c.name+': Bisnis selamanya')}).catch(e=>toast(fbe(e)))}),
+ fdown:el=>twice(el,()=>{const{a,c}=DX;FIN.down(a,c).then(()=>{cls();return after(a,c.name+': kembali ke paket Gratis')}).catch(e=>toast(fbe(e)))}),
  sqx:el=>{const a=appOf(el.dataset.i);a.qr='';rHg()},
  sqx2:el=>{const a=appOf(el.dataset.i);a.qr2='';rHg()},
  yqx:el=>{const a=appOf(el.dataset.i);a.qr='';rHg()},
@@ -581,6 +649,6 @@ ap();rAll();go(0);setTimeout(()=>{const s=$('#spl');if(s)s.remove()},4600);
  try{for(const f of ['app','auth','firestore'])await ldS('https://www.gstatic.com/firebasejs/10.12.2/firebase-'+f+'-compat.js')}catch(e){$('#au').style.display='flex';amsg('Tidak dapat memuat layanan Firebase. Periksa koneksi internet.',1);return}
  APPS.forEach(a=>{const app=firebase.initializeApp(a.firebase,a.id);a.fa=app.auth();a.fs=app.firestore();a.fa.onAuthStateChanged(u=>authCh(a,u))});
  APPS[0].fa.getRedirectResult().then(r=>{if(r&&r.credential)linkOthers(r.credential)}).catch(e=>amsg(fbe(e),1));
- setInterval(()=>{if(BOOTED){APPS.forEach(a=>a.co.forEach(c=>Object.assign(c,a.jenis==='zuisystem'?SYS.state(c):STD.state(a,c))));if(cur===0)rRi()}},30*6e4)})();
+ setInterval(()=>{if(BOOTED){APPS.forEach(a=>a.co.forEach(c=>Object.assign(c,a.jenis==='zuisystem'?SYS.state(c):ad(a).state(a,c))));if(cur===0)rRi()}},30*6e4)})();
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>

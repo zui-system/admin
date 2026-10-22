@@ -1,6 +1,6 @@
 # ZUI ADMIN — panduan pasang (admin.zuisystem.com)
 
-Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System), ZUI KONTRAKTOR, ZUI JURNAL, dan ZUI TO-DO sekarang, aplikasi baru nanti.
+Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System), ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO dan ZUI FINANCE sekarang, aplikasi baru nanti.
 
 ## Isi folder
 
@@ -10,6 +10,24 @@ Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System),
 | `config.js` | Daftar aplikasi Zui + kunci Firebase masing-masing. Aplikasi baru cukup ditambah satu blok di sini |
 | `sw.js`, `manifest.webmanifest`, `icon-*.png` | Supaya bisa dipasang di HP/komputer |
 | `CNAME` | Alamat `admin.zuisystem.com` untuk GitHub Pages |
+
+## Pembaruan 22 Okt 2026: ZUI FINANCE tersambung (Zui Admin 1.5)
+
+- **ZUI FINANCE** ditambahkan di `config.js` dengan pola baru `finance`. Finance **tidak diubah**: paket, harga, data dan alurnya tetap seperti yang sudah ada (lihat `zui-admin-kontrak.txt` di repo Finance).
+  - Satu buku usaha (`workspaces/{id}`) = satu pelanggan. Percobaan Pro 14 hari sejak buku dibuat, lalu turun ke paket **Gratis** (tidak hanya-baca).
+  - Paket Pro Rp 99.000/bulan atau Rp 990.000/tahun, Bisnis Rp 199.000/bulan atau Rp 1.990.000/tahun. Harga ada di `index.html` Finance (`PL`) dan `hargaAwal` di `config.js`; bila diubah, ubah keduanya. Menu **Harga → ZUI FINANCE** hanya menampilkan harga.
+- **Antrean**: permintaan paket dari Finance (`planRequests`). **Aktifkan** menambah 30 hari (bulanan) atau 365 hari (tahunan) dari tanggal berakhir yang masih berlaku, lalu mencatat pemasukan. **Tolak** mengirim alasan ke lonceng pelanggan.
+- **Pelanggan**: perpanjang +30/+365 hari, atur tanggal manual, Bisnis selamanya, atau turunkan ke Gratis.
+- **Pesan**: chat dari ikon chat Finance (`chats`). Percakapan ditandai "baru" sampai dibalas.
+- Admin tidak bisa membaca data pembukuan pelanggan.
+
+### Langkah sekali untuk project akuntansi-zuisystem
+1. Firebase Console project **akuntansi-zuisystem** → Firestore Database → Rules → tempel `firestore.rules` terbaru dari repo ZUI FINANCE → **Publish**. Isinya: `isAdmin()` kini mengizinkan `admin.zuisystem@gmail.com`, dan ada koleksi `adminPayments` untuk pemasukan.
+2. Authentication → Sign-in method → pastikan **Google** aktif (sudah dipakai Finance).
+3. Authentication → Settings → Authorized domains → tambahkan `admin.zuisystem.com`.
+4. (Opsional) Safelist Client ID project **zuisystem** di Google sign-in project akuntansi-zuisystem (langkah 4 di bawah) supaya tidak perlu menekan **Sambungkan**.
+5. Unggah ulang Zui Admin (file `index.html`, `config.js` berubah), lalu cek Pengaturan → Aplikasi tersambung: ZUI FINANCE **tersambung**.
+6. Uji: di Finance (akun pemilik buku) → Pengaturan → Paket → Ajukan Pro → muncul di Antrean → Aktifkan → paket di Finance langsung berubah.
 
 ## Pembaruan 18 Okt 2026: ZUI TO-DO tersambung (Zui Admin 1.4)
 
@@ -90,7 +108,7 @@ Supaya tidak perlu menekan Sambungkan sama sekali:
 - **Ringkasan**: pemasukan bulan ini dan 6 bulan terakhir (per aplikasi), jumlah pelanggan per status, daftar yang berakhir ≤ 7 hari.
 - **Antrean**: semua permintaan bayar dari semua aplikasi. *Aktifkan* (tekan dua kali), *Tolak* dengan alasan. Untuk ZUI ERP ada *Periksa resit & chat* (pembacaan resit otomatis seperti Zui Admin lama).
 - **Pelanggan**: saring per aplikasi dan status, cari nama/email. Buka satu untuk perpanjang (+1/+6/+12 bulan), atur tanggal manual, gratis selamanya, hentikan, atau kembali ke percobaan.
-- **Pesan**: chat pelanggan ZUI ERP, ZUI KONTRAKTOR, ZUI JURNAL dan ZUI TO-DO (termasuk foto bukti bayar). Dari chat Kontraktor bisa langsung Aktifkan/Tolak permintaan bayar perusahaan itu.
+- **Pesan**: chat pelanggan ZUI ERP, ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO (termasuk foto bukti bayar) dan ZUI FINANCE. Dari chat Kontraktor bisa langsung Aktifkan/Tolak permintaan bayar perusahaan itu.
 - **Harga**: harga dan cara bayar per aplikasi. ZUI KONTRAKTOR punya dua set: Rupiah + QRIS dan Ringgit + DuitNow (perusahaan bermata uang Ringgit melihat harga Ringgit).
 - **Pengaturan**: status sambungan per project, notifikasi, PIN, tema, keluar.
 
