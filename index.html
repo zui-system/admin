@@ -37,6 +37,31 @@ a{color:var(--ac)}
 .bn button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mu2);font-size:10.5px}
 .bn button.on{color:var(--ac)}
 .bn .cnt{top:6px;right:calc(50% - 22px)}
+/* HP: logo ZUI membuka bilah samping berisi aplikasi Zui (pengganti deretan chip) */
+.flt{display:none}
+.hb{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;border-radius:12px}
+.hb:active .badge{background:var(--chip)}
+.top .hb small{display:flex;align-items:center;gap:6px}
+.hb small .cx{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hb small svg{flex:none;color:var(--mu2)}
+.dws{position:fixed;inset:0;background:rgba(5,8,10,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.dw{position:fixed;top:0;bottom:0;left:0;width:min(300px,84vw);display:flex;flex-direction:column;background:var(--sf2);border-right:1px solid var(--ln2);border-radius:0 22px 22px 0;box-shadow:var(--sh);transform:translateX(-104%);transition:transform .25s cubic-bezier(.2,.8,.2,1);z-index:41}
+.dw.on{transform:none}.dws.on{opacity:1;pointer-events:auto}
+.dw.drag,.dws.drag{transition:none}
+.dh{display:flex;align-items:center;gap:12px;padding:calc(20px + env(safe-area-inset-top,0px)) 18px 16px calc(18px + env(safe-area-inset-left,0px));border-bottom:1px solid var(--ln);flex:none}
+.dh .tt{flex:1;min-width:0}.dh .tt b{display:block;font:600 16px var(--hd)}.dh .tt small{display:block;font-size:12.5px;color:var(--mu)}
+.dq{margin:12px 14px 4px;height:42px;border-radius:11px;border:1px solid var(--ln);background:var(--bg);display:flex;align-items:center;gap:8px;padding:0 12px;flex:none}
+.dq[hidden]{display:none}.dq svg{color:var(--mu2);flex:none}
+.dq input{flex:1;min-width:0;background:none;border:0;outline:0;height:100%;font-size:16px}
+.dl{overflow-y:auto;padding:8px 8px calc(18px + env(safe-area-inset-bottom,0px));flex:1}
+.di{width:100%;min-height:48px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;text-align:left}
+.di.on{background:var(--chip)}
+.di .nm{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.di .nm small{display:block;font-weight:400;font-size:12px;color:var(--mu2)}
+.di .n{min-width:24px;height:22px;padding:0 7px;border-radius:11px;background:var(--ac);color:var(--acink);font:600 11.5px/22px var(--hd);text-align:center}
+.di .ck{color:var(--ac);flex:none}
+.dg{font:600 11px var(--hd);letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);padding:12px 12px 6px}
+.dn{padding:20px 12px;color:var(--mu);font-size:14px}
 /* komputer: menu samping */
 @media(min-width:960px){
  .side{display:flex;flex-direction:column;gap:4px;width:248px;flex:none;position:sticky;top:0;height:100vh;padding:24px 14px;background:var(--sf);border-right:1px solid var(--ln)}
@@ -49,7 +74,8 @@ a{color:var(--ac)}
  .side nav .cnt{position:static;margin-left:auto}
  .side .cs{margin-top:auto;border-top:1px solid var(--ln);padding:14px 8px 0;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--mu)}
  .side .cs span{display:flex;align-items:center;gap:8px}
- .bn{display:none}
+ .bn,.hb,.dw,.dws{display:none}
+ .flt{display:flex}
  .main{padding:28px 36px 48px}
  .top .badge,.top .tt{display:none}.top h1{display:block;flex:1;margin:0;font:600 26px var(--hd)}
  .dash{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}.dash .tiles{grid-template-columns:1fr;margin:0}
@@ -126,13 +152,13 @@ dialog::backdrop{background:rgba(5,8,10,.6)}dialog h2{margin:0 0 4px;font:600 20
 @keyframes zf{to{opacity:1}}
 #spl u{display:block;width:150px;height:3px;border-radius:3px;background:var(--ac);margin-top:26px;transform:scaleX(0);box-shadow:0 0 12px var(--ac);animation:zl .9s cubic-bezier(.6,0,.2,1) 1.6s forwards}
 @keyframes zl{to{transform:scaleX(1)}}@keyframes spl{0%,85%{opacity:1}100%{opacity:0;visibility:hidden}}
-@media(prefers-reduced-motion:reduce){.pg.on{animation:none}.ib.spin svg{animation:none}}
+@media(prefers-reduced-motion:reduce){.dw,.dws{transition:none}.pg.on{animation:none}.ib.spin svg{animation:none}}
 </style></head><body>
 <div id="spl" aria-hidden="true"><b><span>Z</span><span>U</span><span>I</span></b><i><span style="--i:0">A</span><span style="--i:1">D</span><span style="--i:2">M</span><span style="--i:3">I</span><span style="--i:4">N</span></i><u></u></div>
 <div class="app">
  <aside class="side"><div class="brand"><div class="badge">ZUI</div><div><b>Zui Admin</b><small id="cn2">Semua aplikasi Zui</small></div></div><nav id="sn" aria-label="Menu utama"></nav><div class="cs" id="cs"></div></aside>
  <div class="main"><div class="wrap">
-  <header class="top"><div class="badge">ZUI</div><div class="tt"><b>Zui Admin</b><small id="cn">Semua aplikasi Zui</small></div><h1 id="pt">Ringkasan</h1>
+  <header class="top"><button id="hb" class="hb" type="button" data-a="dw" aria-haspopup="dialog" aria-controls="dw" aria-label="Pilih aplikasi Zui"><span class="badge">ZUI</span><span class="tt"><b>Zui Admin</b><small id="cn">Semua aplikasi Zui</small></span></button><h1 id="pt">Ringkasan</h1>
    <button id="rf" class="ib" type="button" data-a="refresh" aria-label="Muat ulang data" title="Muat ulang data"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
    <button id="nb" class="ib" type="button" data-a="go" data-v="1" aria-label="Antrean" title="Antrean dan pesan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="cnt" id="nbn" aria-hidden="true"></span></button>
   </header>
@@ -140,6 +166,12 @@ dialog::backdrop{background:rgba(5,8,10,.6)}dialog h2{margin:0 0 4px;font:600 20
   <section class="pg on" id="p0"></section><section class="pg" id="p1"></section><section class="pg" id="p2"></section><section class="pg" id="p3"></section><section class="pg" id="p4"></section><section class="pg" id="p5"></section>
  </div></div>
  <nav class="bn" id="bn" aria-label="Menu utama"></nav>
+ <div class="dws" id="dws" data-a="dwx"></div>
+ <aside class="dw" id="dw" role="dialog" aria-modal="true" aria-label="Aplikasi Zui" aria-hidden="true" inert>
+  <div class="dh"><span class="badge">ZUI</span><span class="tt"><b>Zui Admin</b><small>Pilih aplikasi</small></span></div>
+  <label class="dq" id="dq"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dqi" type="search" placeholder="Cari aplikasi…" autocomplete="off" aria-label="Cari aplikasi"></label>
+  <div class="dl" id="dl"></div>
+ </aside>
 </div>
 <div id="ts" role="status"></div><dialog id="dk"></dialog>
 <div id="au" class="au" style="display:none"><div class="ac"><h1>ZUI <span class="w2">ADMIN</span></h1><p class="m">Satu panel untuk semua aplikasi Zui. Khusus akun admin.</p>
@@ -152,7 +184,7 @@ dialog::backdrop{background:rgba(5,8,10,.6)}dialog h2{margin:0 0 4px;font:600 20
 /* =================== dasar =================== */
 const $=s=>document.querySelector(s);
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.6';
+const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.7';
 const APPS=(CF.apps||[]).filter(a=>a&&a.firebase&&a.firebase.apiKey&&a.id).map((a,i)=>Object.assign({warna:'#2FA8D8',jenis:'standar',nama:a.id},a,{i,fa:null,fs:null,ready:false,on:false,err:'',lerr:'',loading:false,loaded:false,co:[],q:[],rev:[],sub:[],bh:[],pay:null,un:[],qf:0,bf:0,qr:null,qp:null}));
 const pad=n=>String(n).padStart(2,'0'),MB=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const iso=m=>{const d=new Date(m);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
@@ -502,7 +534,36 @@ function go(i){i=+i;cur=i;document.querySelectorAll('.pg').forEach((s,j)=>s.clas
 /* saringan aplikasi untuk Ringkasan, Antrean, Pelanggan, Pesan */
 let FA='all';const inF=a=>FA==='all'||String(a.i)===FA;
 function rFlt(){$('#flt').innerHTML=APPS.length<2?'':[`<button class="chip${FA==='all'?' on':''}" data-a="fa" data-v="all">Semua</button>`].concat(APPS.map(a=>`<button class="chip${FA===String(a.i)?' on':''}" data-a="fa" data-v="${a.i}" style="--c:${E(a.warna)}"><i></i>${E(a.nama)}</button>`)).join('');
- $('#cs').innerHTML=APPS.map(a=>`<span><i class="dot" style="--c:${E(a.warna)}"></i>${E(a.nama)} · ${a.on?'tersambung':'belum'}</span>`).join('')}
+ $('#cs').innerHTML=APPS.map(a=>`<span><i class="dot" style="--c:${E(a.warna)}"></i>${E(a.nama)} · ${a.on?'tersambung':'belum'}</span>`).join('');
+ const c=FA==='all'?null:appOf(FA),k=APPS.filter(a=>a.on).length;
+ $('#cn').innerHTML=(c?`<span class="dot" style="--c:${E(c.warna)}"></span><span class="cx">${E(pendek(c.nama))}</span>`:`<span class="cx">Semua aplikasi Zui${k<APPS.length?' · '+k+' dari '+APPS.length+' tersambung':''}</span>`)+(APPS.length>1?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>':'');
+ rDw()}
+/* bilah samping aplikasi (HP): dibuka dari logo ZUI atau geser dari tepi kiri */
+const pendek=n=>String(n||'').replace(/^ZUI\s+/i,'').split(' ').map(w=>w.length<=3?w:w.toLowerCase().replace(/(^|-)\S/g,x=>x.toUpperCase())).join(' ');
+const antre=a=>a.q.length+a.bh.filter(h=>h.bu&&!(h.st==='langganan'||h.st==='resit')).length;
+const CK='<svg class="ck" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+function rDw(){const q=$('#dqi').value.trim().toLowerCase();$('#dq').hidden=APPS.length<=6;
+ const hit=APPS.filter(a=>!q||String(a.nama).toLowerCase().includes(q)),busy=hit.filter(a=>antre(a)).sort((x,y)=>antre(y)-antre(x)),calm=hit.filter(a=>!antre(a)).sort((x,y)=>String(x.nama).localeCompare(String(y.nama)));
+ const it=a=>{const on=FA===String(a.i),n=antre(a);return`<button type="button" class="di${on?' on':''}" data-a="fa" data-v="${a.i}"><span class="dot" style="--c:${E(a.warna)}"></span><span class="nm">${E(pendek(a.nama))}</span>${n?`<span class="n">${n>99?'99+':n}</span>`:''}${on?CK:''}</button>`};
+ $('#dl').innerHTML=(q?'':`<button type="button" class="di${FA==='all'?' on':''}" data-a="fa" data-v="all"><span class="dot"></span><span class="nm">Semua aplikasi<small>${APPS.length} aplikasi</small></span>${FA==='all'?CK:''}</button>`)
+  +(busy.length?'<div class="dg">Ada antrean</div>'+busy.map(it).join(''):'')+(calm.length?`<div class="dg">${busy.length?'Lainnya':'Aplikasi'}</div>`+calm.map(it).join(''):'')
+  +(hit.length?'':`<div class="dn">Tidak ada aplikasi dengan nama "${E(q)}".</div>`)}
+const dwIs=()=>$('#dw').classList.contains('on');
+function dwSet(on){const d=$('#dw');d.classList.toggle('on',on);$('#dws').classList.toggle('on',on);d.style.transform='';$('#dws').style.opacity='';d.setAttribute('aria-hidden',on?'false':'true');d.inert=!on;$('#hb').setAttribute('aria-expanded',on?'true':'false')}
+function dwOpen(){if(APPS.length<2||innerWidth>=960)return;$('#dqi').value='';rDw();dwSet(true);if(!$('#dq').hidden)setTimeout(()=>{try{$('#dqi').focus()}catch(e){}},260)}
+function dwClose(){if(!dwIs())return;dwSet(false);try{$('#hb').focus({preventScroll:true})}catch(e){}}
+$('#dqi').addEventListener('input',rDw);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&dwIs())dwClose()});
+addEventListener('resize',()=>{if(innerWidth>=960&&dwIs())dwSet(false)});
+{let sx=null,sy=0,md='',mv=false;const d=$('#dw'),sc=$('#dws');
+ addEventListener('touchstart',e=>{const t=e.touches[0];mv=false;sx=null;if(e.touches.length>1||innerWidth>=960||APPS.length<2||LKON||$('#dk').open||$('#au').style.display!=='none')return;
+  if(dwIs())md='x';else if(t.clientX<24)md='o';else return;sx=t.clientX;sy=t.clientY},{passive:true});
+ addEventListener('touchmove',e=>{if(sx===null)return;const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+  if(!mv){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)){sx=null;return}mv=true;if(md==='o'){$('#dqi').value='';rDw()}d.classList.add('drag');sc.classList.add('drag');sc.classList.add('on')}
+  const w=d.offsetWidth,off=md==='o'?Math.min(0,-w+dx):Math.min(0,dx);d.style.transform=`translateX(${off}px)`;sc.style.opacity=String(Math.max(0,1+off/w))},{passive:true});
+ const end=e=>{if(sx===null)return;const t=e.changedTouches[0],dx=t.clientX-sx;sx=null;d.classList.remove('drag');sc.classList.remove('drag');
+  if(mv){if(md==='o'?dx>70:dx>-70)dwSet(true);else dwSet(false)}};
+ addEventListener('touchend',end);addEventListener('touchcancel',end)}
 const PF={st:'all',q:''};let HA=0;
 const SKIP=new Set(['CV','PT','UD','PD','TB','TOKO','THE']);
 const ini=n=>{const w=String(n||'').replace(/[^\p{L}\p{N} ]/gu,' ').split(/\s+/).filter(Boolean),k=w.filter(x=>!SKIP.has(x.toUpperCase()));const u=(k.length?k:w);return((u[0]||'?')[0]+((u[1]||'')[0]||'')).toUpperCase()};
@@ -567,7 +628,7 @@ const ACT={
  login:()=>login(),conn:el=>connect(appOf(el.dataset.i)),logout:()=>logout(),
  th:el=>{try{localStorage.setItem('zui.adm2.th',el.dataset.v)}catch(e){}ap();rSet()},
  ntf:async()=>{try{const r=await Notification.requestPermission();toast(r==='granted'?'Notifikasi aktif':'Notifikasi tidak diizinkan')}catch(e){toast('Peramban ini tidak mendukung notifikasi')}rSet()},
- pf:el=>{PF.st=el.dataset.v;rPl()},pfgo:el=>{PF.st=el.dataset.v;rPl();go(2)},fa:el=>{FA=el.dataset.v;rAll()},ha:el=>{HA=+el.dataset.v;rHg()},
+ pf:el=>{PF.st=el.dataset.v;rPl()},pfgo:el=>{PF.st=el.dataset.v;rPl();go(2)},fa:el=>{FA=el.dataset.v;if(el.closest('#dw')){dwClose();if(cur>=4)go(0)}rAll()},dw:()=>dwOpen(),dwx:()=>dwClose(),ha:el=>{HA=+el.dataset.v;rHg()},
  co:el=>{const a=appOf(el.dataset.i),c=a&&findC(a,el.dataset.id);if(!c)return;DX={a,c};ad(a).coDlg(a,c)},
  km:el=>kmOpen(appOf(el.dataset.i),el.dataset.id),kmsend:()=>kmSend(),
  kmakt:el=>twice(el,async()=>{const a=KM.a,cid=KM.cid,b=+el.dataset.b,o=kmOrder(),refs=KM.R&&KM.R.P?KM.R.P.refs:[];busy(el,1);try{const u=await sysAkt(a,cid,b,{order:o,refs});toast('Langganan '+lab(b)+' aktif sampai '+fd(u));await loadApp(a)}catch(e){toast(fbe(e))}busy(el,0)}),
@@ -626,7 +687,7 @@ function authCh(a,u){a.ready=true;
  const was=a.on;a.on=!!u;if(a.on&&!was)startApp(a);if(!a.on&&was)stopApp(a);shell()}
 function shell(){const any=APPS.some(a=>a.on),all=APPS.every(a=>a.ready);
  if(any){if(!BOOTED){BOOTED=true;if(zSess())return;$('#au').style.display='none';pinShow()}}
- else if(all){BOOTED=false;kmStop();cls();$('#au').style.display='flex'}const k=APPS.filter(a=>a.on).length;$('#cn').textContent=$('#cn2').textContent=k===APPS.length?APPS.length+' aplikasi tersambung':k+' dari '+APPS.length+' aplikasi tersambung';rAll()}
+ else if(all){BOOTED=false;kmStop();cls();$('#au').style.display='flex'}const k=APPS.filter(a=>a.on).length;$('#cn2').textContent=k===APPS.length?APPS.length+' aplikasi tersambung':k+' dari '+APPS.length+' aplikasi tersambung';rAll()}
 /* batas sesi: 30 hari untuk aplikasi terpasang, 1 hari di peramban biasa */
 function zSess(){let st=false;try{st=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){}
  const lim=(st?30:1)*DAY,K='zui.adm2.act',g=()=>{try{return+localStorage.getItem(K)||0}catch(e){return 0}},t=()=>{try{localStorage.setItem(K,Date.now())}catch(e){}},ex=()=>{const x=g();return x&&Date.now()-x>lim};
@@ -643,7 +704,7 @@ const pinF=()=>{try{return JSON.parse(localStorage.getItem(PFK)||'null')||{n:0,u
 function pinClr(){try{localStorage.removeItem(PK);localStorage.removeItem(PFK)}catch(e){}}
 const b2h=b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
 async function pinHash(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return b2h(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:150000,hash:'SHA-256'},k,256))}
-function pinShow(){if(!pinGet())return;cls();LKON=true;$('#lk').classList.add('on');$('#lki').value='';$('#lke').textContent='';pinWait();setTimeout(()=>{try{$('#lki').focus()}catch(e){}},60)}
+function pinShow(){if(!pinGet())return;cls();dwClose();LKON=true;$('#lk').classList.add('on');$('#lki').value='';$('#lke').textContent='';pinWait();setTimeout(()=>{try{$('#lki').focus()}catch(e){}},60)}
 function pinWait(){const w=pinF().u-Date.now();clearTimeout(pinWait.t);if(w>0){$('#lke').textContent='Terlalu banyak percobaan. Coba lagi dalam '+Math.ceil(w/1000)+' detik.';$('#lki').disabled=true;pinWait.t=setTimeout(pinWait,1000)}else if($('#lki').disabled){$('#lki').disabled=false;$('#lke').textContent='';try{$('#lki').focus()}catch(e){}}}
 async function pinChk(en){const p=pinGet();if(!p||!(window.crypto&&crypto.subtle))return;const v=$('#lki').value;if(v.length<p.n&&!en)return;if(v.length<4)return;const f=pinF();if(f.u>Date.now())return;
  if(await pinHash(v,p.s)===p.h){try{localStorage.removeItem(PFK)}catch(e){}LKON=false;$('#lk').classList.remove('on');$('#lki').value='';return}
