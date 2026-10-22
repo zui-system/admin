@@ -11,11 +11,18 @@ Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System),
 | `sw.js`, `manifest.webmanifest`, `icon-*.png` | Supaya bisa dipasang di HP/komputer |
 | `CNAME` | Alamat `admin.zuisystem.com` untuk GitHub Pages |
 
+## Pembaruan 22 Okt 2026 (2): harga ZUI FINANCE diatur dari Zui Admin (Zui Admin 1.6)
+
+- **Harga → ZUI FINANCE** kini bisa diubah seperti aplikasi Zui lain: harga Pro/Bisnis bulanan & tahunan dalam Rupiah dan Ringgit, QRIS, DuitNow QR, catatan pembayaran, WhatsApp. Disimpan di `zconfig/pay` project akuntansi-zuisystem dan langsung tampil di halaman Paket Finance.
+- Di Finance, pelanggan memilih Rupiah (QRIS) atau Ringgit (DuitNow), membayar, lalu mengirim **nomor referensi**. Antrean menampilkan jumlah, mata uang dan nomor referensinya; pemasukan Ringgit dihitung terpisah.
+- Finance tidak lagi kembali ke halaman login saat dimuat ulang, dan tidak keluar otomatis setelah 5 menit (sama dengan aplikasi Zui lain).
+- Wajib: terbitkan ulang `firestore.rules` terbaru dari repo ZUI FINANCE (izin baca `zconfig/pay` dan kolom `cur`, `amount`, `ref`).
+
 ## Pembaruan 22 Okt 2026: ZUI FINANCE tersambung (Zui Admin 1.5)
 
 - **ZUI FINANCE** ditambahkan di `config.js` dengan pola baru `finance`. Finance **tidak diubah**: paket, harga, data dan alurnya tetap seperti yang sudah ada (lihat `zui-admin-kontrak.txt` di repo Finance).
   - Satu buku usaha (`workspaces/{id}`) = satu pelanggan. Percobaan Pro 14 hari sejak buku dibuat, lalu turun ke paket **Gratis** (tidak hanya-baca).
-  - Paket Pro Rp 99.000/bulan atau Rp 990.000/tahun, Bisnis Rp 199.000/bulan atau Rp 1.990.000/tahun. Harga ada di `index.html` Finance (`PL`) dan `hargaAwal` di `config.js`; bila diubah, ubah keduanya. Menu **Harga → ZUI FINANCE** hanya menampilkan harga.
+  - Paket Pro Rp 99.000/bulan atau Rp 990.000/tahun, Bisnis Rp 199.000/bulan atau Rp 1.990.000/tahun. Harga ada di `index.html` Finance (`PL`) dan `hargaAwal` di `config.js`; bila diubah, ubah keduanya. Harga bisa diubah di **Harga → ZUI FINANCE** (lihat pembaruan 1.6).
 - **Antrean**: permintaan paket dari Finance (`planRequests`). **Aktifkan** menambah 30 hari (bulanan) atau 365 hari (tahunan) dari tanggal berakhir yang masih berlaku, lalu mencatat pemasukan. **Tolak** mengirim alasan ke lonceng pelanggan.
 - **Pelanggan**: perpanjang +30/+365 hari, atur tanggal manual, Bisnis selamanya, atau turunkan ke Gratis.
 - **Pesan**: chat dari ikon chat Finance (`chats`). Percakapan ditandai "baru" sampai dibalas.

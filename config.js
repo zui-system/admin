@@ -95,8 +95,10 @@ window.ZUI_ADMIN = {
       url: "https://finance.zuisystem.com",
       // samakan dengan index.html ZUI FINANCE (planInfo: 14 hari percobaan Pro sejak buku dibuat, lalu paket Gratis)
       percobaanHari: 14,
-      // harga Rupiah per paket: 1 = bulanan (30 hari), 12 = tahunan (365 hari). Harus sama dengan PL di index.html ZUI FINANCE
-      hargaAwal: { pro: { 1: 99000, 12: 990000 }, bisnis: { 1: 199000, 12: 1990000 } },
+      // harga awal (dipakai sampai Anda menyimpan harga di menu Harga). 1 = bulanan (30 hari), 12 = tahunan (365 hari).
+      // Harus sama dengan PL (Rupiah) dan PLM (Ringgit) di index.html ZUI FINANCE
+      hargaAwal:    { pro: { 1: 99000, 12: 990000 }, bisnis: { 1: 199000, 12: 1990000 } },
+      hargaAwalMYR: { pro: { 1: 26, 12: 260 }, bisnis: { 1: 52, 12: 520 } },
       firebase: {
         apiKey: "AIzaSyA2sNMzxL0OHMSISirTJ-odR6xzGyY7SIc",
         authDomain: "akuntansi-zuisystem.firebaseapp.com",

@@ -152,7 +152,7 @@ dialog::backdrop{background:rgba(5,8,10,.6)}dialog h2{margin:0 0 4px;font:600 20
 /* =================== dasar =================== */
 const $=s=>document.querySelector(s);
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.5';
+const CF=window.ZUI_ADMIN||{},ADMIN=String(CF.adminEmail||'admin.zuisystem@gmail.com').trim().toLowerCase(),DAY=864e5,VER='1.6';
 const APPS=(CF.apps||[]).filter(a=>a&&a.firebase&&a.firebase.apiKey&&a.id).map((a,i)=>Object.assign({warna:'#2FA8D8',jenis:'standar',nama:a.id},a,{i,fa:null,fs:null,ready:false,on:false,err:'',lerr:'',loading:false,loaded:false,co:[],q:[],rev:[],sub:[],bh:[],pay:null,un:[],qf:0,bf:0,qr:null,qp:null}));
 const pad=n=>String(n).padStart(2,'0'),MB=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const iso=m=>{const d=new Date(m);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
@@ -308,25 +308,26 @@ const SYS={
    workspaces/{w} + billing/plan {plan:'pro'|'bisnis',until}, planRequests/{w}, chats/{w}/messages.
    Habis masa percobaan/paket = turun ke paket Gratis (bukan hanya-baca). Pemasukan dicatat di adminPayments. */
 const FPL={pro:'Pro',bisnis:'Bisnis'},FPER={monthly:'Bulanan',yearly:'Tahunan'},FDAYS={monthly:30,yearly:365};
-const FDEF={pro:{1:99000,12:990000},bisnis:{1:199000,12:1990000}};
-const finPrice=(a,plan,per)=>+(((a.hargaAwal||FDEF)[plan]||{})[per==='yearly'?12:1])||0;
+const FDEF={pro:{1:99000,12:990000},bisnis:{1:199000,12:1990000}},FDEFM={pro:{1:26,12:260},bisnis:{1:52,12:520}};
+/* harga dari zconfig/pay (disimpan di menu Harga), bila kosong pakai hargaAwal/hargaAwalMYR di config.js */
+const finPrice=(a,plan,per,cur)=>{const m=per==='yearly'?12:1,my=cur==='MYR',v=+((((a.pay||{})[my?'pricesMYR':'prices']||{})[plan]||{})[m]);return v>0?v:+((((my?a.hargaAwalMYR||FDEFM:a.hargaAwal||FDEF))[plan]||{})[m])||0};
 const FIN={
  state(a,c){const now=Date.now(),TD=(+a.percobaanHari||14)*DAY;
   if(c.untilRaw>=Date.UTC(2090,0,1))return{kind:'free',plan:FPL[c.pk]||'Bisnis',until:0};
   if(c.untilRaw>now)return{kind:'paid',plan:FPL[c.pk]||c.pk||'Pro',until:c.untilRaw};
   const te=(c.created||now)+TD;if(now<te)return{kind:'trial',plan:'Percobaan Pro',until:te};
   return{kind:'expired',plan:'Gratis',until:c.untilRaw||te}},
- async load(a){const db=a.fs;const [ws,rq]=await Promise.all([db.collection('workspaces').get(),db.collection('planRequests').get()]);
-  a.pay=null;
+ async load(a){const db=a.fs;const [ws,rq,pc]=await Promise.all([db.collection('workspaces').get(),db.collection('planRequests').get(),db.collection('zconfig').doc('pay').get().catch(()=>null)]);
+  a.pay=pc&&pc.exists?pc.data():{};a.qr=null;a.qr2=null;
   a.co=await Promise.all(ws.docs.map(async d=>{const x=d.data(),mi=x.memberInfo||{};let b={};try{const s=await db.collection('workspaces').doc(d.id).collection('billing').doc('plan').get();b=s.exists?s.data():{}}catch(e){}
    const c={a,id:d.id,name:x.name||'(tanpa nama)',email:(mi[x.owner]||{}).email||'',created:ms(x.createdAt),pk:b.plan||'',untilRaw:ms(b.until),members:(x.memberIds||[]).length};return Object.assign(c,FIN.state(a,c))}));
   a.sub=rq.docs.map(d=>{const x=d.data(),st={pending:'wait',approved:'ok',rejected:'no'}[x.status]||x.status;
-   return{id:d.id,cid:d.id,coName:x.wsName||'',plan:FPL[x.plan]||x.plan,months:x.period==='yearly'?12:1,amount:finPrice(a,x.plan,x.period),cur:'IDR',status:st,note:x.note||'',atMs:ms(x.at),doneMs:ms(x.decidedAt)}}).sort((p,q)=>q.atMs-p.atMs);
+   return{id:d.id,cid:d.id,coName:x.wsName||'',plan:FPL[x.plan]||x.plan,months:x.period==='yearly'?12:1,amount:x.amount!=null?+x.amount:finPrice(a,x.plan,x.period,x.cur),cur:x.cur==='MYR'?'MYR':'IDR',status:st,note:x.note||'',atMs:ms(x.at),doneMs:ms(x.decidedAt)}}).sort((p,q)=>q.atMs-p.atMs);
   /* catatan pemasukan dibuat Zui Admin saat mengaktifkan; bila rules belum diterbitkan, pemasukan kosong saja */
-  a.rev=[];try{const ps=await db.collection('adminPayments').get();a.rev=ps.docs.map(d=>{const x=d.data();return{m:ms(x.at),amt:+x.amount||0,cur:'IDR',a,cid:x.ws,nm:x.wsName||''}})}catch(e){}},
+  a.rev=[];try{const ps=await db.collection('adminPayments').get();a.rev=ps.docs.map(d=>{const x=d.data();return{m:ms(x.at),amt:+x.amount||0,cur:x.cur==='MYR'?'MYR':'IDR',a,cid:x.ws,nm:x.wsName||''}})}catch(e){}},
  watch(a){a.qf=0;a.un.push(a.fs.collection('planRequests').where('status','==','pending').onSnapshot(s=>{const old=new Set(a.q.map(q=>q.id));
-  a.q=s.docs.map(d=>{const r=d.data(),c=a.co.find(x=>x.id===d.id);return{a,id:d.id,cid:d.id,name:r.wsName||(c&&c.name)||d.id,email:r.email||'',label:(FPL[r.plan]||r.plan)+' · '+(FPER[r.period]||r.period),amount:finPrice(a,r.plan,r.period),cur:'IDR',ref:'',at:ms(r.at)||Date.now(),plan:r.plan,period:r.period,months:r.period==='yearly'?12:1}});
-  if(a.qf){const nw=a.q.filter(q=>!old.has(q.id));if(nw.length)notify(a.nama+': permintaan paket',nw.length>1?nw.length+' permintaan baru':nw[0].name+' · '+nw[0].label+' · '+fm(nw[0].amount,'IDR'))}a.qf=1;onQ()},e=>{a.lerr=fbe(e);rAll()}));
+  a.q=s.docs.map(d=>{const r=d.data(),c=a.co.find(x=>x.id===d.id);return{a,id:d.id,cid:d.id,name:r.wsName||(c&&c.name)||d.id,email:r.email||'',label:(FPL[r.plan]||r.plan)+' · '+(FPER[r.period]||r.period),amount:r.amount!=null?+r.amount:finPrice(a,r.plan,r.period,r.cur),cur:r.cur==='MYR'?'MYR':'IDR',ref:r.ref||'',at:ms(r.at)||Date.now(),plan:r.plan,period:r.period,months:r.period==='yearly'?12:1}});
+  if(a.qf){const nw=a.q.filter(q=>!old.has(q.id));if(nw.length)notify(a.nama+': permintaan paket',nw.length>1?nw.length+' permintaan baru':nw[0].name+' · '+nw[0].label+' · '+fm(nw[0].amount,nw[0].cur))}a.qf=1;onQ()},e=>{a.lerr=fbe(e);rAll()}));
   /* chats/{w}: lastFrom=='user' berarti perlu dibalas */
   a.bf=0;a.un.push(a.fs.collection('chats').onSnapshot(s=>{const o=a.bh;a.bh=s.docs.map(d=>{const x=d.data();return{id:d.id,nama:x.wsName||d.id,oe:x.email||'',tp:ms(x.lastAt)||Date.now(),dr:x.lastFrom==='admin'?'a':'u',bu:x.lastFrom==='user',tx:x.lastText||'',st:'chat'}});
    if(a.bf){const nw=a.bh.filter(h=>h.bu&&!(o.find(x=>x.id===h.id)||{}).bu);if(nw.length)notify(a.nama+': pesan baru',nw.length>1?nw.length+' pesan baru':nw[0].nama+(nw[0].tx?': '+nw[0].tx:''))}a.bf=1;onQ();if(KM.a===a)kmHeadUi()},e=>{a.lerr=fbe(e);rAll()}))},
@@ -334,7 +335,7 @@ const FIN={
  async setPlan(a,w,plan,until,pay){const db=a.fs,B=db.batch();B.set(db.collection('workspaces').doc(w).collection('billing').doc('plan'),{plan,until:TS(until)});if(pay)B.set(db.collection('adminPayments').doc(),pay);return B},
  async activate(a,q){const db=a.fs,ref=db.collection('workspaces').doc(q.cid).collection('billing').doc('plan'),d=await ref.get(),x=d.exists?d.data():{};
   const until=Math.max(Date.now(),ms(x.until))+(FDAYS[q.period]||30)*DAY,sv=firebase.firestore.FieldValue.serverTimestamp(),
-   B=await FIN.setPlan(a,q.cid,q.plan,until,{ws:q.cid,wsName:String(q.name||'').slice(0,80),plan:q.plan,period:q.period,amount:q.amount,at:sv});
+   B=await FIN.setPlan(a,q.cid,q.plan,until,{ws:q.cid,wsName:String(q.name||'').slice(0,80),plan:q.plan,period:q.period,amount:q.amount,cur:q.cur,ref:q.ref,at:sv});
   B.update(db.collection('planRequests').doc(q.id),{status:'approved',decidedAt:sv,note:''});await B.commit();return until},
  async reject(a,q,note){await a.fs.collection('planRequests').doc(q.id).update({status:'rejected',note:String(note||'').slice(0,200),decidedAt:firebase.firestore.FieldValue.serverTimestamp()})},
  coDlg(a,c){const h=a.sub.filter(r=>r.cid===c.id),pk=c.pk||'pro';
@@ -352,8 +353,21 @@ const FIN={
  async extend(a,c,plan,per){const until=Math.max(Date.now(),c.kind==='paid'?c.untilRaw:0)+(FDAYS[per]||30)*DAY;await(await FIN.setPlan(a,c.id,plan,until)).commit();return until},
  async save(a,c,plan,until){await(await FIN.setPlan(a,c.id,plan,until)).commit()},
  async down(a,c){await a.fs.collection('workspaces').doc(c.id).collection('billing').doc('plan').delete()},
- payForm(a){const P=a.hargaAwal||FDEF;return`<p class="m">Harga ${E(a.nama)} diatur di aplikasinya (daftar paket <code>PL</code> di <code>index.html</code>) dan di <code>config.js</code> Zui Admin (<code>hargaAwal</code>). Keduanya harus sama. Pelanggan membayar lewat chat; aktifkan dari Antrean setelah uang masuk.</p>
-  <div class="sx"><table class="tb"><thead><tr><th>Paket</th><th>Bulanan (30 hari)</th><th>Tahunan (365 hari)</th></tr></thead><tbody><tr><td>Gratis</td><td>Rp 0</td><td>Rp 0</td></tr>${Object.keys(FPL).map(p=>`<tr><td>${FPL[p]}</td><td>${rp((P[p]||{})[1])}</td><td>${rp((P[p]||{})[12])}</td></tr>`).join('')}</tbody></table></div>`},
+ payForm(a){const pc=a.pay||{},qr=a.qr!=null?a.qr:(pc.qris||''),dn=a.qr2!=null?a.qr2:(pc.duitnow||'');
+  const tbl=(px,pr,df)=>`<div class="sx"><table class="tb"><thead><tr><th>Paket</th><th>Bulanan (30 hari)</th><th>Tahunan (365 hari)</th></tr></thead><tbody><tr><td>Gratis</td><td>0</td><td>0</td></tr>${Object.keys(FPL).map(p=>`<tr><td>${FPL[p]}</td>${[1,12].map(m=>`<td><input class="ni" id="${px}_${p}_${m}" inputmode="decimal" value="${+(((pr||{})[p]||{})[m]||(df[p]||{})[m]||0)}" style="min-width:78px;width:100%;text-align:right;margin:0;padding:7px 6px"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const img=(v,nm,set,clr)=>`<div class="qri">${v?`<img src="${E(v)}" alt="${nm}">`:`<span class="m">Belum ada ${nm}.</span>`}<label class="b" style="cursor:pointer">Pilih gambar ${nm}<input type="file" accept="image/*" data-a="${set}" data-i="${a.i}" hidden></label>${v?`<button class="b" data-a="${clr}" data-i="${a.i}">Hapus</button>`:''}</div>`;
+  return`<p class="m">Tampil di halaman Paket ${E(a.nama)}. Pelanggan memilih Rupiah (QRIS) atau Ringgit (DuitNow), membayar, lalu mengirim nomor referensi ke Antrean. Paket Gratis selalu Rp 0.</p>
+  <div class="h3">Rupiah · QRIS</div>${tbl('fp',pc.prices,a.hargaAwal||FDEF)}
+  <label class="fl">Catatan pembayaran Rupiah (mis. nama rekening usaha)<textarea class="ni" id="fnt" rows="2" maxlength="500">${E(pc.note||'')}</textarea></label>
+  ${img(qr,'QRIS','sqr','sqx')}
+  <div class="h3">Ringgit · DuitNow</div>${tbl('fm',pc.pricesMYR,a.hargaAwalMYR||FDEFM)}
+  <label class="fl">Catatan pembayaran Ringgit<textarea class="ni" id="fnm" rows="2" maxlength="500">${E(pc.noteMYR||'')}</textarea></label>
+  ${img(dn,'DuitNow QR','sqr2','sqx2')}
+  <label class="fl">WhatsApp admin (cadangan, untuk bukti bayar)<input class="ni" id="fwa" inputmode="tel" maxlength="20" placeholder="62812…" value="${E(pc.wa||'')}"></label>
+  <div class="act"><button class="b pri" data-a="spsave" data-i="${a.i}">Simpan harga & pembayaran</button></div>`},
+ async paySave(a){const rd=(px,dec)=>{const o={};for(const p of Object.keys(FPL)){o[p]={};for(const m of [1,12]){const v=$('#'+px+'_'+p+'_'+m).value;o[p][m]=dec?Math.max(0,Math.round(num(v)*100)/100):int(v)}}return o};
+  const o={prices:rd('fp'),pricesMYR:rd('fm',1),wa:$('#fwa').value.trim(),note:$('#fnt').value.slice(0,500),noteMYR:$('#fnm').value.slice(0,500)};if(a.qr!=null)o.qris=a.qr;if(a.qr2!=null)o.duitnow=a.qr2;
+  await a.fs.collection('zconfig').doc('pay').set(o,{merge:true});a.pay=Object.assign({},a.pay,o);a.qr=null;a.qr2=null},
  /* percakapan: chats/{w}/messages */
  chat(a,cid,cb){return a.fs.collection('chats').doc(cid).collection('messages').orderBy('at','desc').limit(80).onSnapshot(s=>cb(s.docs.map(d=>{const x=d.data();return{dari:x.from==='admin'?'a':'u',teks:x.text||'',img:'',nama:x.name||'',ts:ms(x.at)||Date.now()}})),e=>toast(fbe(e)))},
  seen(){},
@@ -577,7 +591,7 @@ const ACT={
  yqx:el=>{const a=appOf(el.dataset.i);a.qr='';rHg()},
  yqx2:el=>{const a=appOf(el.dataset.i);delete a.qp[el.dataset.k];rHg()},
  ydx:el=>{const a=appOf(el.dataset.i);a.dn='';rHg()},
- spsave:el=>{const a=appOf(el.dataset.i);busy(el,1);STD.paySave(a).then(()=>{toast('Harga & pembayaran disimpan');rHg()}).catch(e=>toast(fbe(e))).finally(()=>busy(el,0))},
+ spsave:el=>{const a=appOf(el.dataset.i);busy(el,1);ad(a).paySave(a).then(()=>{toast('Harga & pembayaran disimpan');rHg()}).catch(e=>toast(fbe(e))).finally(()=>busy(el,0))},
  ypsave:el=>{const a=appOf(el.dataset.i);busy(el,1);SYS.paySave(a).then(()=>{toast('Pembayaran disimpan');rHg()}).catch(e=>toast(fbe(e))).finally(()=>busy(el,0))},
  pin:el=>pinDlg(+el.dataset.v),pinsave:el=>pinSave(+el.dataset.v),lock:()=>pinShow(),pinforgot:()=>{pinClr();LKON=false;$('#lk').classList.remove('on');logout()}
 };
