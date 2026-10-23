@@ -1,6 +1,6 @@
 # ZUI ADMIN — panduan pasang (admin.zuisystem.com)
 
-Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System), ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO dan ZUI FINANCE sekarang, aplikasi baru nanti.
+Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System), ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO, ZUI FINANCE dan ZUI STUDIKU sekarang, aplikasi baru nanti.
 
 ## Isi folder
 
@@ -10,6 +10,22 @@ Satu aplikasi admin untuk semua aplikasi Zui: ZUI ERP (dulu bernama Zui System),
 | `config.js` | Daftar aplikasi Zui + kunci Firebase masing-masing. Aplikasi baru cukup ditambah satu blok di sini |
 | `sw.js`, `manifest.webmanifest`, `icon-*.png` | Supaya bisa dipasang di HP/komputer |
 | `CNAME` | Alamat `admin.zuisystem.com` untuk GitHub Pages |
+
+## Pembaruan 23 Okt 2026: ZUI STUDIKU tersambung
+
+- **ZUI STUDIKU** (`studikita.zuisystem.com`, project Firebase **sudiku-zui**) ditambahkan di `config.js` dengan pola `standar`. Tiap pengguna Studiku = satu "perusahaan" (ID = UID pengguna).
+- Paket di Zui Admin: **Starter = Pelajar**, **Pro = Keluarga**, **Bisnis = Sekolah dan bimbel**. Pengguna hanya bisa memesan Pelajar dan Keluarga dari aplikasi; Sekolah diaktifkan manual di **Pelanggan → Perpanjang** (pilih Bisnis) setelah ada kesepakatan.
+- Percobaan 14 hari mulai 23 Okt 2026, tenggang 3 hari. Setelah itu pengguna Studiku turun ke paket **Gratis** (tidak hanya-baca), walau di Zui Admin tampil "kedaluwarsa".
+- Harga awal Rupiah: Pelajar Rp 19.000 / 95.000 / 149.000, Keluarga Rp 39.000 / 195.000 / 390.000 (1 / 6 / 12 bulan). Ubah di **Harga → ZUI STUDIKU** lalu simpan, dan unggah gambar QRIS di sana. Harga Ringgit hanya pengisi tabel; Studiku hanya memakai Rupiah.
+- Antrean menerima permintaan bayar dari menu Langganan Studiku; Pesan menerima Chat admin Studiku (termasuk foto bukti bayar).
+
+### Langkah sekali untuk project sudiku-zui
+1. Firebase Console project **sudiku-zui** → Firestore Database → Rules → tempel `firestore.rules` dari repo ZUI STUDIKU → **Publish**. Fungsi `superAdmin()` di dalamnya dipakai Zui Admin.
+2. Authentication → Sign-in method → pastikan **Google** aktif.
+3. Authentication → Settings → Authorized domains → tambahkan `admin.zuisystem.com` (dan `studikita.zuisystem.com`).
+4. (Opsional) Safelist Client ID project **zuisystem** di Google sign-in project sudiku-zui (langkah 4 di bawah) supaya tidak perlu menekan **Sambungkan**.
+5. Unggah ulang Zui Admin (file `config.js`, `sw.js` berubah), lalu cek Pengaturan → Aplikasi tersambung: ZUI STUDIKU **tersambung**.
+6. Uji: daftar akun baru di Studiku → Pengaturan → Premium → Berlangganan → kirim nomor referensi → muncul di Antrean → Aktifkan → paket di Studiku berubah.
 
 ## Pembaruan 22 Okt 2026 (2): harga ZUI FINANCE diatur dari Zui Admin (Zui Admin 1.6)
 
