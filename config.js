@@ -3,7 +3,7 @@
 
    jenis:
      "zuisystem" = pola ZUI ERP (dulu Zui System): perusahaan/{id}.langganan, bantuan, sistem/bayar
-     "standar"   = pola ZUI KONTRAKTOR, ZUI JURNAL dan ZUI TO-DO: companies/{id} plan/until/free, subreqs, zconfig/pay
+     "standar"   = pola ZUI KONTRAKTOR, ZUI JURNAL, ZUI TO-DO dan ZUI STUDIKU: companies/{id} plan/until/free, subreqs, zconfig/pay
      "finance"   = pola ZUI FINANCE: workspaces/{id}/billing/plan, planRequests, chats (lihat zui-admin-kontrak.txt di repo Finance)
    Aplikasi Zui baru sebaiknya memakai pola "standar" agar cukup menambah satu blok di bawah.
 
@@ -106,6 +106,30 @@ window.ZUI_ADMIN = {
         storageBucket: "akuntansi-zuisystem.firebasestorage.app",
         messagingSenderId: "185991014669",
         appId: "1:185991014669:web:02e913399e410e6c27a844"
+      }
+    },
+    {
+      id: "stu",
+      nama: "ZUI STUDIKU",
+      jenis: "standar",
+      warna: "#7A5CFF",
+      url: "https://studikita.zuisystem.com",
+      // samakan dengan TRIAL, GRACE, LAUNCH di app.html dan planActive di firestore.rules ZUI STUDIKU.
+      // Setelah percobaan, pengguna Studiku turun ke paket Gratis (tidak hanya-baca); di sini tetap tampil "kedaluwarsa".
+      percobaanHari: 14,
+      tenggangHari: 3,
+      mulaiPercobaan: "2026-10-23",
+      // Starter = Pelajar, Pro = Keluarga, Bisnis = Sekolah dan bimbel (hanya diaktifkan manual dari Pelanggan).
+      // Harga awal harus sama dengan PRICE di app.html ZUI STUDIKU. Studiku hanya memakai Rupiah.
+      hargaAwal:    { starter: { 1: 19000, 6: 95000, 12: 149000 }, pro: { 1: 39000, 6: 195000, 12: 390000 }, business: { 1: 150000, 6: 750000, 12: 1500000 } },
+      hargaAwalMYR: { starter: { 1: 5, 6: 25, 12: 40 }, pro: { 1: 10, 6: 50, 12: 100 }, business: { 1: 40, 6: 200, 12: 400 } },
+      firebase: {
+        apiKey: "AIzaSyCWEaQJeihJ8o4_72uYtEWWXaj-MlRQsi0",
+        authDomain: "sudiku-zui.firebaseapp.com",
+        projectId: "sudiku-zui",
+        storageBucket: "sudiku-zui.firebasestorage.app",
+        messagingSenderId: "127632344691",
+        appId: "1:127632344691:web:2e706f39acd1660c260c06"
       }
     }
 
